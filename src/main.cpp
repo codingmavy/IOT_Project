@@ -2,39 +2,69 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_BMP280.h>
+
+// I2C address for the BMP280 sensor. Common addresses are 0x76 or 0x77.
 #define BMP280_ADDRESS 0x76
-Adafruit_BMP280 bmp; // I2C
+Adafruit_BMP280 bmp; // BMP280 sensor object using I2C.
 
 #define IR_PIN 19
-int value;
+int value; // Stores the digital reading from the IR sensor.
 
 void setup() {
-  Serial.begin(9600);
+  // Initialize the serial monitor for debugging output.
+  Serial.begin(115200);
+
+  // Initialize the BMP280 and capture the status result.
   unsigned status;
   status = bmp.begin(BMP280_ADDRESS);
+
+  // Configure the IR input pin.
   pinMode(IR_PIN, INPUT);
-   if (!status) {
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
-                      "try a different address!"));
-    Serial.print("SensorID was: 0x"); Serial.println(bmp.sensorID(),16);
+
+  // If the BMP280 initialization fails, print diagnostic information.
+  if (!status) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or try a different address!"));
+    Serial.print("SensorID was: 0x");
+    Serial.println(bmp.sensorID(), 16);
     Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
     Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
     Serial.print("        ID of 0x60 represents a BME 280.\n");
     Serial.print("        ID of 0x61 represents a BME 680.\n");
     while (1) delay(10);
   }
-  /* Default settings from datasheet. */
+
+  // Configure BMP280 sampling and filtering settings.
+  // These settings are based on the datasheet recommendations.
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temperature oversampling */
                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+                  Adafruit_BMP280::FILTER_X16,      /* IIR filter coefficient. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time between measurements. */
 }
 
 void loop() {
+  // Read the digital IR sensor state and print it.
   value = digitalRead(IR_PIN);
   Serial.print("IR value: ");
   Serial.println(value);
+
+  // Read and print temperature from the BMP280 sensor.
+  Serial.print(F("Temperature = "));
+  Serial.print(bmp.readTemperature());
+  Serial.println(" *C");
+
+  // Read and print pressure from the BMP280 sensor.
+  Serial.print(F("Pressure = "));
+  Serial.print(bmp.readPressure());
+  Serial.println(" Pa");
+
+  // Calculate and print approximate altitude using standard sea-level pressure.
+  Serial.print(F("Approx altitude = "));
+  Serial.print(bmp.readAltitude(1013.25)); /* Adjusted to local forecast! */
+  Serial.println(" m");
+
+  // Blank line to separate output blocks and limit update rate.
+  Serial.println();
   delay(1000);
 }
 

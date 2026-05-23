@@ -1,2 +1,1 @@
-GPIO 21 SDA
-GPIO 18 SCK
+BMP280 operating voltage is 5V
