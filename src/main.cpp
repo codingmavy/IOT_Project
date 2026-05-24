@@ -16,7 +16,7 @@ NTPClient timeClient(ntpUDP,"pool.ntp.org", 19800, 60000);
 // I2C address for the BMP280 sensor. Common addresses are 0x76 or 0x77.
 #define BMP280_ADDRESS 0x76
 Adafruit_BMP280 bmp; // BMP280 sensor object using I2C.
-
+#define Led_PIN 12
 #define IR_PIN 14
 int value; // Stores the digital reading from the IR sensor.
 
@@ -30,19 +30,26 @@ void setup() {
   // Configure the IR input pin.
   pinMode(IR_PIN, INPUT);
 
+  pinMode(Led_PIN, OUTPUT);
+
+
   //WiFi
   WiFi.begin(ssid, password);
 
   Serial.print("Connecting");
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
+    digitalWrite(Led_PIN, HIGH);
+    delay(250);
+    digitalWrite(Led_PIN, LOW);
+    delay(250);
     Serial.print(".");
   }
   timeClient.begin();
   timeClient.update();
 
   Serial.println();
+  digitalWrite(Led_PIN, HIGH);
   Serial.print("Connected, IP address: ");
   Serial.println(WiFi.localIP());
 
