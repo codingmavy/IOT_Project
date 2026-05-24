@@ -28,7 +28,7 @@ static constexpr int timeOffsetSeconds = 19800;
 static constexpr int timeUpdateIntervalMs = 60000;
 
 // ── Send Interval ─────────────────────────────────────
-static constexpr unsigned long SEND_INTERVAL = 2000;
+static constexpr unsigned long SEND_INTERVAL = 5000;
 static unsigned long lastSend = 0;
 
 // ── Objects ───────────────────────────────────────────
