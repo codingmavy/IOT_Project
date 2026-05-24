@@ -2,24 +2,49 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_BMP280.h>
+#include <ESP8266WiFi.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+
+const char *ssid     = "POCO X5 Pro 5G"; // Replace with your WiFi network name
+const char *password = "Domain_99";
+
+WiFiUDP ntpUDP;
+// initialized to a time offset of 10 hours
+NTPClient timeClient(ntpUDP,"pool.ntp.org", 19800, 60000);
 
 // I2C address for the BMP280 sensor. Common addresses are 0x76 or 0x77.
 #define BMP280_ADDRESS 0x76
 Adafruit_BMP280 bmp; // BMP280 sensor object using I2C.
 
-#define IR_PIN 19
+#define IR_PIN 14
 int value; // Stores the digital reading from the IR sensor.
 
 void setup() {
   // Initialize the serial monitor for debugging output.
   Serial.begin(115200);
-
   // Initialize the BMP280 and capture the status result.
   unsigned status;
   status = bmp.begin(BMP280_ADDRESS);
 
   // Configure the IR input pin.
   pinMode(IR_PIN, INPUT);
+
+  //WiFi
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  timeClient.begin();
+  timeClient.update();
+
+  Serial.println();
+  Serial.print("Connected, IP address: ");
+  Serial.println(WiFi.localIP());
 
   // If the BMP280 initialization fails, print diagnostic information.
   if (!status) {
@@ -43,6 +68,9 @@ void setup() {
 }
 
 void loop() {
+  //Time update and print
+  timeClient.update();
+  Serial.println(timeClient.getFormattedTime());
   // Read the digital IR sensor state and print it.
   value = digitalRead(IR_PIN);
   Serial.print("IR value: ");
