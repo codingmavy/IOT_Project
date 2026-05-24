@@ -6,14 +6,13 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <NewPing.h>
-#include <NewPing.h>
 
-const char *ssid = "POCO X5 Pro 5G"; // Replace with your WiFi network name
+const char *ssid     = "POCO X5 Pro 5G"; // Replace with your WiFi network name
 const char *password = "Domain_99";
 
 WiFiUDP ntpUDP;
 // initialized to a time offset of 10 hours
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 19800, 60000);
+NTPClient timeClient(ntpUDP,"pool.ntp.org", 19800, 60000);
 
 // I2C address for the BMP280 sensor. Common addresses are 0x76 or 0x77.
 #define BMP280_ADDRESS 0x76
@@ -22,16 +21,7 @@ Adafruit_BMP280 bmp; // BMP280 sensor object using I2C.
 #define IR_PIN 14
 int value; // Stores the digital reading from the IR sensor.
 
-// Ultrasonic sensor pins and settings
-#define TRIGGER_PIN 13
-#define ECHO_PIN 15
-#define MAX_DISTANCE 200
-
-// NewPing setup of pins and maximum distance
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-
-void setup()
-{
+void setup() {
   // Initialize the serial monitor for debugging output.
   Serial.begin(115200);
   // Initialize the BMP280 and capture the status result.
@@ -43,7 +33,8 @@ void setup()
 
   pinMode(Led_PIN, OUTPUT);
 
-  // WiFi
+
+  //WiFi
   WiFi.begin(ssid, password);
 
   Serial.print("Connecting");
@@ -64,8 +55,7 @@ void setup()
   Serial.println(WiFi.localIP());
 
   // If the BMP280 initialization fails, print diagnostic information.
-  if (!status)
-  {
+  if (!status) {
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring or try a different address!"));
     Serial.print("SensorID was: 0x");
     Serial.println(bmp.sensorID(), 16);
@@ -73,8 +63,7 @@ void setup()
     Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
     Serial.print("        ID of 0x60 represents a BME 280.\n");
     Serial.print("        ID of 0x61 represents a BME 680.\n");
-    while (1)
-      delay(10);
+    while (1) delay(10);
   }
 
   // Configure BMP280 sampling and filtering settings.
@@ -86,9 +75,8 @@ void setup()
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time between measurements. */
 }
 
-void loop()
-{
-  // Time update and print
+void loop() {
+  //Time update and print
   timeClient.update();
   Serial.println(timeClient.getFormattedTime());
   // Read the digital IR sensor state and print it.
@@ -111,13 +99,9 @@ void loop()
   Serial.print(bmp.readAltitude(1013.25)); /* Adjusted to local forecast! */
   Serial.println(" m");
 
-  // Read and print distance from the ultrasonic sensor.
-  unsigned int distance = sonar.ping_cm();
-  Serial.print("Food LEVEL: ");
-  Serial.print(distance);
-  Serial.println("cm");
-
   // Blank line to separate output blocks and limit update rate.
   Serial.println();
   delay(1000);
 }
+
+
