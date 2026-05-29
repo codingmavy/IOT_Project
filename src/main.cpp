@@ -14,7 +14,7 @@ static constexpr char password[] = "Domain_99";
 #define DATABASE_HOST "iot-project-29231-default-rtdb.firebaseio.com"
 
 // ── Pin Definitions ───────────────────────────────────
-static constexpr uint8_t ledPin = 12;
+static constexpr uint8_t ledPin = 2;
 static constexpr uint8_t irPin = 14;
 static constexpr uint8_t triggerPin = 13;
 static constexpr uint8_t echoPin = 15;
@@ -221,6 +221,7 @@ void setup()
     Serial.begin(115200);
     initializeHardware();
     connectToWiFi();
+    pinMode(ledPin, OUTPUT);
 
     // Firebase SSL
     client.setInsecure();
@@ -236,6 +237,7 @@ void setup()
 }
 void loop()
 {
+    digitalWrite(ledPin, HIGH); // LED on while processing
     // WiFi watchdog
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -244,6 +246,7 @@ void loop()
     }
 
     timeClient.update();
+    printSensorData(gatherSensorData());
 
     if (millis() - lastSend > SEND_INTERVAL)
     {
