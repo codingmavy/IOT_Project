@@ -1,8 +1,19 @@
 BMP280 operating voltage is 5V
-D8 D7 ultrasonic
-D2 D1 Bmp180
-D4 led
 
-OBJECT DETECT ULTRASONIC 
-#define TRIGGER_PIN 12
-#define ECHO_PIN 14
+Ultrasonic food level sensor:
+- triggerPin = GPIO13   // Food level sonar
+- echoPin = GPIO15
+
+BMP180 pins:
+- SCL = GPIO5
+- SDA = GPIO4
+
+LED:
+- GPIO2 
+
+Buzzer:
+- GPIO3
+
+Object detect ultrasonic:
+- TRIGGER_PIN = GPIO12
+- ECHO_PIN = GPIO14
