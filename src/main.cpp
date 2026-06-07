@@ -51,6 +51,11 @@ static bool          wasPresent       = false;
 static unsigned long presenceStartMs  = 0;
 static unsigned long feedingDurSec    = 0;
 
+// Add these variables alongside the existing visit tracking vars
+static int foodAtArrival   = 0;
+static int foodAtDeparture = 0;
+static int foodConsumed    = 0;
+
 // ── Log buffer (last 20 entries) ─────────────────────────────
 #define LOG_SIZE 20
 static String logBuffer[LOG_SIZE];
@@ -103,12 +108,6 @@ static void blinkLed(uint8_t pin, unsigned long intervalMs) {
     digitalWrite(pin, LOW);  delay(intervalMs);
 }
 
-static void alertBeep(int times) {
-    for (int i = 0; i < times; i++) {
-        tone(buzzerPin, 1000); delay(200);
-        noTone(buzzerPin);     delay(150);
-    }
-}
 
 static void blinkPresence(bool present) {
     if (present) {
@@ -201,6 +200,25 @@ static SensorReadings gatherSensorData() {
     return data;
 }
 
+static void updateVisitTracking(bool present) {
+    if (present && !wasPresent) {
+        presenceStartMs = millis();
+        visitCount++;
+        foodAtArrival = gatherSensorData().food_pct;  // snapshot on arrival
+        addLog("Cattle ARRIVED — Visit #" + String(visitCount) +
+               " | Food: " + String(foodAtArrival) + "%");
+    }
+    if (!present && wasPresent) {
+        feedingDurSec  = (millis() - presenceStartMs) / 1000;
+        foodAtDeparture = gatherSensorData().food_pct; // snapshot on departure
+        foodConsumed    = foodAtArrival - foodAtDeparture;
+        if (foodConsumed < 0) foodConsumed = 0;        // guard sensor noise
+        addLog("Cattle LEFT — Duration: " + String(feedingDurSec) +
+               "s | Consumed: " + String(foodConsumed) + "%");
+    }
+    wasPresent = present;
+}
+
 static void printSensorData(const SensorReadings &data) {
     Serial.println("── Sensor Data ──────────────");
     Serial.println("Time          : " + data.timestamp);
@@ -218,18 +236,6 @@ static void printSensorData(const SensorReadings &data) {
 // ════════════════════════════════════════════════════════════════
 //  VISIT & FEEDING DURATION TRACKING
 // ════════════════════════════════════════════════════════════════
-static void updateVisitTracking(bool present) {
-    if (present && !wasPresent) {
-        presenceStartMs = millis();
-        visitCount++;
-        addLog("Cattle ARRIVED — Visit #" + String(visitCount));
-    }
-    if (!present && wasPresent) {
-        feedingDurSec = (millis() - presenceStartMs) / 1000;
-        addLog("Cattle LEFT — Duration: " + String(feedingDurSec) + "s");
-    }
-    wasPresent = present;
-}
 
 // ════════════════════════════════════════════════════════════════
 //  ALERTS
@@ -250,17 +256,19 @@ void sendToFirebase(float temp,
                     unsigned int objectDist,
                     bool  cattlePresent)
 {
-    //This function hardcodes health_status to fixed value
+    
     String json = "{";
-    json += "\"temperature\":"      + String(temp, 1)                  + ",";
-    json += "\"pressure\":"         + String(pressure)                  + ",";
-    json += "\"altitude\":"         + String(altitude)                  + ",";
-    json += "\"food\":"             + String(food_pct)                  + ",";
-    json += "\"object_distance\":"  + String(objectDist)                + ",";
-    json += "\"cattle_present\":"   + String(cattlePresent ? 1 : 0)     + ",";
-    json += "\"health_status\":\"fine\",";
-    json += "\"visit_count\":"      + String(visitCount)                + ",";
-    json += "\"feeding_duration\":" + String(feedingDurSec)             ;
+    json += "\"temperature\":"        + String(temp, 1)               + ",";
+    json += "\"pressure\":"           + String(pressure)              + ",";
+    json += "\"altitude\":"           + String(altitude)              + ",";
+    json += "\"food\":"               + String(food_pct)              + ",";
+    json += "\"object_distance\":"    + String(objectDist)            + ",";
+    json += "\"cattle_present\":"     + String(cattlePresent ? 1 : 0) + ",";
+    json += "\"visit_count\":"        + String(visitCount)            + ",";
+    json += "\"feeding_duration\":"   + String(feedingDurSec)         + ",";
+    json += "\"food_at_arrival\":"    + String(foodAtArrival)         + ",";
+    json += "\"food_at_departure\":"  + String(foodAtDeparture)       + ",";
+    json += "\"food_consumed\":"      + String(foodConsumed)          ;
     json += "}";
 
     Serial.println("Sending: " + json);
@@ -335,7 +343,6 @@ void loop() {
     }
 
     timeClient.update();
-    printSensorData(gatherSensorData());
 
     if (millis() - lastSend > SEND_INTERVAL) {
         lastSend = millis();
